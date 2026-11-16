@@ -1,0 +1,32 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment files
+.env
+.env.local
+
+# Databases & local data (keep reference text, ignore active DB)
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# Exports and logs
+exports/*
+!exports/.gitkeep
+*.log
+
+# Streamlit
+.streamlit/
+
+# OS specific
+.DS_Store
+Thumbs.db

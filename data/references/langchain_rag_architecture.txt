@@ -1,0 +1,24 @@
+# Reference: RAG Architecture & Pipeline Components (Modern Industry Standard)
+
+PIPELINE STAGES IN MODERN RAG SYSTEMS:
+
+1. Ingestion Phase:
+- Document Loading: Ingesting raw external knowledge formats (PDFs, Markdown, Web pages, Word documents, Databases).
+- Chunking: Splitting large documents into smaller, coherent text segments (chunks). Chunking is critical because language models have finite context windows, and smaller focused chunks improve search relevance and prevent dilution of specific facts.
+- Embedding Generation: Passing text chunks through an embedding model (e.g. text-embedding-3-small, BAAI/bge, Sentence-BERT) to convert words into high-dimensional numerical vectors (arrays of floating-point numbers). Chunks with similar semantic meaning end up close to each other in vector space.
+- Vector Indexing & Storage: Storing chunk embeddings along with original text and metadata in a Vector Database (e.g., Pinecone, Chroma, Milvus, Weaviate, FAISS).
+
+2. Retrieval Phase:
+- Query Vectorization: When a user asks a question, the question is converted into an embedding vector using the identical embedding model.
+- Semantic Similarity Search: The vector database computes distance metrics (Cosine Similarity, Dot Product, or Euclidean distance) between query vector and stored chunk vectors.
+- Top-K Selection: The system extracts the top-K most semantically relevant text passages matching the intent of the query.
+
+3. Augmentation & Generation Phase:
+- Context Injection: Retrieved passages are structured into an augmented prompt template:
+  "Answer the user query based ONLY on the following trusted context passages: [Retrieved Passages]. User Question: [Query]".
+- LLM Inference: The generative model synthesizes a fluent, natural response grounded directly in the provided passages.
+
+4. Trade-offs and Limitations:
+- Latency: Two-step process (retrieval + generation) adds network and compute overhead.
+- Chunking Boundary Errors: If an answer spans across chunks, poorly tuned chunk overlap can cause partial information loss.
+- Garbage-In, Garbage-Out: If the retrieved chunks are irrelevant or factually incorrect, the LLM will generate incorrect answers.

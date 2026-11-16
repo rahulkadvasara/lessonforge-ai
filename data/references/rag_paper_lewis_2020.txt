@@ -1,0 +1,25 @@
+# Authoritative Reference: Retrieval-Augmented Generation (Lewis et al., NeurIPS 2020)
+Title: Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks
+Authors: Patrick Lewis, Ethan Perez, Aleksandros Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal, Heinrich Kuttler, Mike Lewis, Wen-tau Yih, Tim Rocktäschel, Sebastian Riedel, Douwe Kiela
+Conference: Advances in Neural Information Processing Systems (NeurIPS 2020)
+
+CORE ARCHITECTURAL CONCEPTS:
+1. Problem Formulation:
+Pre-trained neural language models store factual knowledge implicitly in their network parameters. However, parameter-only memory has serious limitations:
+- Knowledge is static at training cut-off.
+- Cannot easily expand or update memory without expensive re-training or fine-tuning.
+- Susceptible to "hallucinations" (generating plausible-sounding but factually false claims).
+- Cannot provide verifiable citations for factual provenance.
+
+2. Hybrid Architecture (Parametric + Non-Parametric Memory):
+RAG combines:
+- Parametric Memory: A pre-trained sequence-to-sequence neural network (e.g. BART, T5, LLaMA) that understands language, grammar, and reasoning.
+- Non-Parametric Memory: A dense vector index of authoritative documents (e.g. Wikipedia articles, internal handbooks, legal codes) retrieved via dense semantic search.
+
+3. The Three RAG Pillars:
+- RETRIEVAL: Given an input query q, a dense retriever (DPR / bi-encoder) computes similarity between the query embedding and pre-computed document chunk embeddings, returning top-k relevant text passages.
+- AUGMENTATION: The retrieved passages are formatted as external context and concatenated with the user query into the model prompt.
+- GENERATION: The language model reads the augmented prompt and generates the response conditioned on the provided factual context.
+
+4. Factual Precision vs. Fine-Tuning:
+RAG differs fundamentally from fine-tuning. Fine-tuning adjusts the model's internal weights on new text, which is slow, risks catastrophic forgetting, and does not guarantee factual fidelity. RAG supplies real-time, inspectable source documents in the prompt context at inference time without modifying underlying model weights.
