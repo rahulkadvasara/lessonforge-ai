@@ -18,7 +18,7 @@ The core technical philosophy of LessonForge AI is **verifiable agentic iteratio
 - **FR-6: Regeneration Engine**: Failed checkpoints, evidence, reasons, and actionable suggestions are bundled into structured feedback. The generator revises the lesson while preserving correct sections. Bounded strictly to 2 retries (3 total attempts).
 - **FR-7: Persistent Memory & Evolution**: SQLite database tracking runs, versions, evaluation results, rejection logs, user feedback, and learned insights. Recurring failures automatically generate persistent guidance for future generation runs.
 - **FR-8: Professional Streamlit UI**: Multi-tab interface featuring Dashboard Overview, Live Agent Workflow tracker, Evaluation breakdown, Version diffs/rejection log, Lesson viewer with Markdown/JSON export, History inspection, and Memory & Learning analytics.
-- **FR-9: Model & Provider Abstraction**: Configurable Groq Cloud model (`llama-3.3-70b-versatile` default, fallback `llama-3.1-8b-instant`), with extensible interface for alternative providers. Zero hardcoded API keys.
+- **FR-9: Model & Provider Abstraction**: Configurable Groq Cloud model (`openai/gpt-oss-120b` default, fallback `openai/gpt-oss-20b`), with extensible interface for alternative providers. Zero hardcoded API keys.
 
 ### 2.2 Non-Functional Requirements (NFR)
 - **NFR-1: Reliability & Guaranteed Termination**: The workflow is a bounded Directed Acyclic Graph (DAG) in LangGraph with explicit iteration counters. It is impossible to enter an infinite loop.

@@ -83,7 +83,7 @@ graph TD
 ## 3. Technology Stack
 
 - **Orchestration**: LangGraph 1.2+ (StateGraph cyclic workflow)
-- **Language Models**: Groq Cloud API (`llama-3.3-70b-versatile` default, `llama-3.1-8b-instant`)
+- **Language Models**: Groq Cloud API (`openai/gpt-oss-120b` default, `openai/gpt-oss-20b`, `qwen/qwen3.8-27b`)
 - **Data Validation & Schemas**: Pydantic v2.11+
 - **Frontend Dashboard**: Streamlit 1.37+
 - **Persistence & Memory**: SQLite3 with relational tables and foreign keys
@@ -241,7 +241,7 @@ cp .env.example .env
 Edit `.env` and set your `GROQ_API_KEY`:
 ```ini
 GROQ_API_KEY=gsk_your_groq_api_key_here
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=openai/gpt-oss-120b
 ```
 *(Note: You can also launch the app in Offline/Mock Mode or enter your Groq API key directly in the Streamlit sidebar!)*
 
@@ -256,7 +256,7 @@ streamlit run app.py
 Open your browser at `http://localhost:8501`.
 
 ### Operating Modes:
-1. **Live Groq Mode**: Supply your API key in `.env` or in the sidebar. Inference runs at ultra-fast speeds using `llama-3.3-70b-versatile`.
+1. **Live Groq Mode**: Supply your API key in `.env` or in the sidebar. Inference runs at ultra-fast speeds using `openai/gpt-oss-120b`.
 2. **Offline / Mock Mode**: Toggle the checkbox in the sidebar. The workflow executes deterministically using `MockLLMClient`, perfect for testing or demonstrating without internet access.
 
 ---
@@ -318,8 +318,3 @@ tests/test_workflow.py::test_routing_functions PASSED
 - **Grounding Scope**: Currently curated for RAG and core Generative AI architectures. Future iterations can connect dynamic external web scrapers or ArXiv API loaders.
 - **Multi-Modal Visuals**: Future versions can generate Mermaid flowcharts dynamically embedded into the generated lesson markdown.
 - **Multi-Model Cross-Auditing**: The system can support multi-model evaluation ensembles (e.g. evaluating with LLaMA 3.3 70B and Claude 3.5 Sonnet in parallel).
-
----
-
-## 12. License
-MIT License. Developed for the GenAI Take-Home Assessment.

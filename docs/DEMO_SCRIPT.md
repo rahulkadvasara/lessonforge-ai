@@ -21,7 +21,7 @@ This script provides a structured walkthrough for demonstrating the **LessonForg
 > "Our default learner profile is tailored to a 12th-grade graduate from India with limited English vocabulary, a non-English-medium background, zero prior technical experience, and a desire to enter AI.
 > 
 > The topic is 'Introduction to RAG (Retrieval-Augmented Generation)'. 
-> Notice in the sidebar we can configure the Groq Cloud model—defaulting to `llama-3.3-70b-versatile`—or toggle Offline/Mock Mode for deterministic test demonstrations.
+> Notice in the sidebar we can configure the Groq Cloud model—defaulting to `openai/gpt-oss-120b`—or toggle Offline/Mock Mode for deterministic test demonstrations.
 > We set the Max Regeneration Retries to 2."
 
 ---

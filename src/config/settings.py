@@ -32,7 +32,7 @@ class Settings(BaseModel):
     
     # LLM Settings
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
-    groq_model: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    groq_model: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
     llm_temperature: float = float(os.getenv("LLM_TEMPERATURE", "0.2"))
     llm_timeout_seconds: int = int(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
     llm_max_retries: int = int(os.getenv("LLM_MAX_RETRIES", "3"))

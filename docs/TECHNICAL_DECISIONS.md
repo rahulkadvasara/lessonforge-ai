@@ -11,7 +11,7 @@
 - **Trade-off**: Requires explicit state definitions and careful schema modeling, but delivers 100% deterministic workflow boundaries.
 
 ### 1.2 LLM Provider: Groq Cloud API with Multi-Provider Abstraction
-- **Decision**: Integrate **Groq Cloud API** via an extensible provider abstraction (`BaseLLMClient`), defaulting to fast, capable open-weights models (`llama-3.3-70b-versatile` or `llama-3.1-8b-instant`).
+- **Decision**: Integrate **Groq Cloud API** via an extensible provider abstraction (`BaseLLMClient`), defaulting to fast, capable open-weights models (`openai/gpt-oss-120b` or `openai/gpt-oss-20b`).
 - **Rationale**:
   - Evaluator and generator loops require high token-throughput and minimal latency so users don't wait minutes per evaluation cycle. Groq provides ultra-fast inference (hundreds of tokens/second on LPU).
   - Encapsulating the client behind `BaseLLMClient` ensures zero lock-in: swapping to OpenAI, Anthropic, or an offline Ollama backend requires implementing only a single interface class.
