@@ -30,9 +30,16 @@ class Settings(BaseModel):
     app_name: str = "LessonForge AI"
     app_env: str = os.getenv("APP_ENV", "development")
     
-    # LLM Settings
+    # LLM Provider & Settings
+    llm_provider: str = os.getenv("LLM_PROVIDER", "gemini")
+    
+    # Google Gemini Settings
+    gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+
+    # Groq Settings
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
-    groq_model: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+    groq_model: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
     llm_temperature: float = float(os.getenv("LLM_TEMPERATURE", "0.2"))
     llm_timeout_seconds: int = int(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
     llm_max_retries: int = int(os.getenv("LLM_MAX_RETRIES", "3"))

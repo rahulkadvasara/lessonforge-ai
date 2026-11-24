@@ -8,7 +8,7 @@ from src.config.settings import get_settings
 from src.memory.database import get_db_manager
 from src.memory.repository import MemoryRepository
 from src.memory.learning import SelfEvolutionEngine
-from src.services.llm_service import get_llm_client, MockLLMClient, GroqLLMClient
+from src.services.llm_service import get_llm_client, MockLLMClient, GroqLLMClient, GeminiLLMClient
 from src.services.export_service import ExportService
 from src.evaluation.rubric import RUBRIC_CHECKPOINTS
 
@@ -90,42 +90,74 @@ def main():
         st.markdown("---")
         st.markdown("### ⚙️ Engine Configuration")
 
-        api_key_input = st.text_input(
-            "Groq API Key",
-            type="password",
-            value=settings.groq_api_key or "",
-            help="Enter your Groq Cloud API Key or configure it in .env"
+        provider_choice = st.radio(
+            "LLM Provider",
+            options=["Google Gemini", "Groq Cloud"],
+            index=0 if settings.llm_provider.lower() == "gemini" else 1,
+            help="Switch between Google Gemini (high throughput) and Groq Cloud."
         )
 
-        available_models = [
-            "openai/gpt-oss-120b",
-            "openai/gpt-oss-20b",
-            "qwen/qwen3.8-27b"
-        ]
-        default_index = available_models.index(settings.groq_model) if settings.groq_model in available_models else 0
-
-        model_choice = st.selectbox(
-            "Groq Model",
-            options=available_models,
-            index=default_index
-        )
-
-        use_mock_mode = st.checkbox(
-            "Offline / Mock Mode",
-            value=not bool(api_key_input or settings.groq_api_key),
-            help="Runs the agent workflow using deterministic mock responses (ideal for testing/demo without API keys)."
-        )
-
-        # Instantiate LLM client according to settings
-        if use_mock_mode:
-            active_llm = MockLLMClient()
-            st.info("ℹ️ Running in Offline / Mock Mode")
-        else:
-            active_llm = GroqLLMClient(
-                api_key=api_key_input or settings.groq_api_key,
-                model_name=model_choice
+        if provider_choice == "Google Gemini":
+            api_key_input = st.text_input(
+                "Gemini API Key",
+                type="password",
+                value=settings.gemini_api_key or "",
+                help="Enter your Google Gemini API Key or configure it in .env"
             )
-            st.success(f"Connected to Groq ({model_choice})")
+            gemini_models = [
+                "gemini-3.5-flash-lite",
+                "gemini-3.8-flash",
+                "gemini-3.5-flash"
+            ]
+            default_gem_idx = gemini_models.index(settings.gemini_model) if settings.gemini_model in gemini_models else 0
+            model_choice = st.selectbox("Gemini Model", options=gemini_models, index=default_gem_idx)
+
+            use_mock_mode = st.checkbox(
+                "Offline / Mock Mode",
+                value=not bool(api_key_input or settings.gemini_api_key),
+                help="Runs deterministic mock responses (ideal for testing without API keys)."
+            )
+
+            if use_mock_mode:
+                active_llm = MockLLMClient()
+                st.info("ℹ️ Running in Offline / Mock Mode")
+            else:
+                active_llm = GeminiLLMClient(
+                    api_key=api_key_input or settings.gemini_api_key,
+                    model_name=model_choice
+                )
+                st.success(f"Connected to Gemini ({model_choice})")
+
+        else:
+            api_key_input = st.text_input(
+                "Groq API Key",
+                type="password",
+                value=settings.groq_api_key or "",
+                help="Enter your Groq Cloud API Key or configure it in .env"
+            )
+            groq_models = [
+                "openai/gpt-oss-20b",
+                "openai/gpt-oss-120b",
+                "qwen/qwen3.8-27b"
+            ]
+            default_groq_idx = groq_models.index(settings.groq_model) if settings.groq_model in groq_models else 0
+            model_choice = st.selectbox("Groq Model", options=groq_models, index=default_groq_idx)
+
+            use_mock_mode = st.checkbox(
+                "Offline / Mock Mode",
+                value=not bool(api_key_input or settings.groq_api_key),
+                help="Runs deterministic mock responses (ideal for testing without API keys)."
+            )
+
+            if use_mock_mode:
+                active_llm = MockLLMClient()
+                st.info("ℹ️ Running in Offline / Mock Mode")
+            else:
+                active_llm = GroqLLMClient(
+                    api_key=api_key_input or settings.groq_api_key,
+                    model_name=model_choice
+                )
+                st.success(f"Connected to Groq ({model_choice})")
 
     # Header
     st.markdown('<div class="main-title">LessonForge AI — Self-Evaluating Content Generator</div>', unsafe_allow_html=True)

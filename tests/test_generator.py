@@ -52,3 +52,22 @@ def test_regeneration_agent_receives_feedback():
     assert "CLR_01" in user_prompt
     assert "Embeddings were not explained" in user_prompt
     assert "Provide a simple number fingerprint analogy" in user_prompt
+
+
+def test_llm_client_factory_providers():
+    """Verify get_llm_client properly initializes clients or falls back to mock."""
+    from src.services.llm_service import get_llm_client, MockLLMClient, GroqLLMClient, GeminiLLMClient
+
+    # Force mock
+    mock_client = get_llm_client(force_mock=True)
+    assert isinstance(mock_client, MockLLMClient)
+
+    # Groq with key
+    groq_client = get_llm_client(provider="groq", api_key="test-key", model_name="openai/gpt-oss-20b")
+    assert isinstance(groq_client, GroqLLMClient)
+    assert groq_client.get_model_name() == "openai/gpt-oss-20b"
+
+    # Gemini with key
+    gemini_client = get_llm_client(provider="gemini", api_key="test-key", model_name="gemini-3.5-flash-lite")
+    assert isinstance(gemini_client, GeminiLLMClient)
+    assert gemini_client.get_model_name() == "gemini-3.5-flash-lite"

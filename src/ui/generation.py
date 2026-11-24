@@ -1,10 +1,13 @@
 """Generation UI: controls topic input, learner profile, and live agent workflow tracking."""
 import uuid
+import logging
 import streamlit as st
 from datetime import datetime, timezone
 from src.config.settings import DEFAULT_TOPIC, DEFAULT_LEARNER_PROFILE
 from src.graph.workflow import create_workflow_graph
 from src.services.llm_service import BaseLLMClient
+
+logger = logging.getLogger(__name__)
 
 
 def render_generation_interface(llm_client: BaseLLMClient):
