@@ -9,8 +9,9 @@ CORE EVALUATION PRINCIPLES:
 1. STRICT BINARY JUDGMENT: Every checkpoint must evaluate strictly to "PASS" or "FAIL". No middle scores or partial passes.
 2. ZERO COMPROMISE: If a lesson fails EVEN ONE checkpoint, the "overall_status" must be "FAIL". Never approve content based on an average score.
 3. EVIDENTIARY PROOF: You must quote or describe specific textual evidence from the lesson for every single checkpoint.
-4. ACTIONABLE SUGGESTIONS: For every failed checkpoint, provide a concrete, step-by-step prescription for the generator to fix it.
-5. STRICT OUTPUT FORMAT: Respond ONLY with a valid JSON object matching the requested schema. Do not include markdown preamble outside the JSON code block.
+4. ACTIONABLE SUGGESTIONS: For every failed checkpoint, provide a concrete, 1-sentence prescription for the generator to fix it.
+5. CONCISE JSON: Keep 'evidence' to 1 brief sentence and 'reason' to 1 brief sentence per checkpoint. Do not write essays. This ensures the output is concise and never truncated.
+6. STRICT OUTPUT FORMAT: Respond ONLY with a valid JSON object matching the requested schema. Do not include markdown preamble outside the JSON code block.
 
 THE 18 MANDATORY CHECKPOINTS TO EVALUATE:
 """ + "\n".join([f"- ID: {cp.id} | Dimension: {cp.dimension} | Name: {cp.name}\n  Description: {cp.description}\n  Pass Criteria: {cp.pass_criteria}\n  Fail Criteria: {cp.fail_criteria}" for cp in RUBRIC_CHECKPOINTS]) + """
@@ -18,19 +19,17 @@ THE 18 MANDATORY CHECKPOINTS TO EVALUATE:
 EXPECTED JSON OUTPUT SCHEMA:
 {
   "overall_status": "PASS" | "FAIL",
-  "passed_count": <integer 0-18>,
-  "failed_count": <integer 0-18>,
+  "passed_count": <int>,
+  "failed_count": <int>,
   "checkpoints": [
     {
       "id": "ACC_01",
-      "dimension": "Technical Accuracy and Grounding",
-      "name": "Topic Definition Accuracy",
       "status": "PASS" | "FAIL",
-      "evidence": "Exact quote or cited passage",
-      "reason": "Detailed explanation of why this checkpoint passed or failed",
-      "suggestion": "Actionable suggestion if FAIL, or null if PASS"
+      "evidence": "1 concise sentence citing the lesson",
+      "reason": "1 concise sentence explanation",
+      "suggestion": null or "1 sentence fix if FAIL"
     },
-    ... (MUST contain all 18 checkpoints: ACC_01..04, BEG_01..04, EXA_01..03, CLR_01..03, COV_01..03, FLO_01)
+    ... (Must list all 18 IDs: ACC_01, ACC_02, ACC_03, ACC_04, BEG_01, BEG_02, BEG_03, BEG_04, EXA_01, EXA_02, EXA_03, CLR_01, CLR_02, CLR_03, COV_01, COV_02, COV_03, FLO_01)
   ]
 }
 """
@@ -48,15 +47,15 @@ INTENDED LEARNER PERSONA:
 - Language: {learner_profile.get('english_proficiency')}
 - Technical background: {learner_profile.get('technical_background')}
 
-AUTHORITATIVE REFERENCE TRUTH:
-{grounding_context}
-
 GENERATED LESSON TO AUDIT:
 ----------------------------------------------------------------------
 {lesson_text}
 ----------------------------------------------------------------------
 
-Perform an exhaustive, strict audit against all 18 checkpoints.
-Be strict but fair. If the lesson introduces terms without immediate simple explanation, marks must be deducted (FAIL on CLR_01 / BEG_02). If any mandatory section is missing or weak, FAIL the relevant coverage checkpoint.
+EVALUATION RULES (FAIR, OBJECTIVE, CONCISE):
+1. Evaluate all 18 checkpoints (ACC_01 to FLO_01).
+2. Mark PASS if the lesson reasonably includes the concept, section, or analogy in beginner-friendly terms.
+3. Mark FAIL ONLY if a required section or concept is completely absent or factually incorrect.
+4. Keep 'evidence' and 'reason' to 1 short sentence each (do NOT use double quotes or newlines inside string values).
 Output ONLY the JSON report.
 """

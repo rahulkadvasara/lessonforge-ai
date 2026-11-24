@@ -78,12 +78,15 @@ def render_generation_interface(llm_client: BaseLLMClient):
         try:
             workflow = create_workflow_graph(llm_client=llm_client)
 
-            # Stream execution events
-            final_output = None
+            # Stream execution events and accumulate full state
+            accumulated_state = dict(initial_state)
             step_count = 0
             for output in workflow.stream(initial_state):
                 step_count += 1
                 for node_name, node_state in output.items():
+                    if isinstance(node_state, dict):
+                        accumulated_state.update(node_state)
+
                     logs = node_state.get("execution_logs", [])
                     latest_log = logs[-1] if logs else f"Executed {node_name}"
                     
@@ -94,13 +97,13 @@ def render_generation_interface(llm_client: BaseLLMClient):
                     elif node_name == "lesson_generator":
                         status_box.write(f"✍️ **Stage 3: Lesson Generation** — {latest_log}")
                     elif node_name == "content_evaluator":
-                        eval_report = node_state.get("evaluation_result", {})
+                        eval_report = accumulated_state.get("evaluation_result", {})
                         overall = eval_report.get("overall_status", "UNKNOWN")
                         passed = eval_report.get("passed_count", 0)
                         icon = "✅" if overall == "PASS" else "❌"
                         status_box.write(f"⚖️ **Stage 4: Quality Gate Audit** — {icon} Status: {overall} ({passed}/18 checkpoints)")
                     elif node_name == "regeneration":
-                        attempt = node_state.get("current_attempt", 2)
+                        attempt = accumulated_state.get("current_attempt", 2)
                         status_box.write(f"🔄 **Stage 5: Intelligent Regeneration** — Attempt {attempt} revised with evaluator feedback.")
                     elif node_name == "record_failure":
                         status_box.write("⚠️ **Stage 5: Bounded Limit Reached** — Max retries exhausted. Marking for human review.")
@@ -109,17 +112,37 @@ def render_generation_interface(llm_client: BaseLLMClient):
                     elif node_name == "finalize":
                         status_box.write("📦 **Stage 7: Finalization & Export Packaging** — Complete.")
 
-                    final_output = node_state
+            # Resolve final status accurately from accumulated state
+            eval_report = accumulated_state.get("evaluation_result", {})
+            passed_cnt = eval_report.get("passed_count", 0)
+            overall_eval = eval_report.get("overall_status", "FAIL")
+            final_status = accumulated_state.get("final_status", "UNKNOWN")
 
-            final_status = final_output.get("final_status", "UNKNOWN") if final_output else "UNKNOWN"
-            if final_status == "APPROVED":
+            if final_status == "APPROVED" or (overall_eval == "PASS" and passed_cnt == 18):
+                final_status = "APPROVED"
+                accumulated_state["final_status"] = "APPROVED"
                 status_box.update(label="🎉 Workflow Completed Successfully — Lesson APPROVED (18/18 Passed)", state="complete")
-                st.success("Lesson successfully satisfied all 18 mandatory quality checkpoints!")
+                st.success("🎉 **Lesson APPROVED!** Content successfully satisfied all 18 mandatory quality checkpoints!")
             else:
+                final_status = "NEEDS_HUMAN_REVIEW"
+                accumulated_state["final_status"] = "NEEDS_HUMAN_REVIEW"
                 status_box.update(label="⚠️ Workflow Completed — NEEDS HUMAN REVIEW", state="error")
-                st.warning("Lesson reached retry ceiling without passing 100% of rubric checkpoints. Preserved for human review.")
+                st.warning(f"Lesson reached retry ceiling ({passed_cnt}/18 checkpoints passed). Preserved for human review.")
 
-            st.session_state["latest_workflow_output"] = final_output
+            # Store active state for other tabs
+            st.session_state["active_run_id"] = run_id
+            st.session_state["latest_workflow_output"] = accumulated_state
+
+            # Show quick navigation banner
+            st.markdown("---")
+            col_nav1, col_nav2, col_nav3 = st.columns(3)
+            with col_nav1:
+                st.info(f"**Run ID:** `{run_id[:12]}...`  \n**Status:** `{final_status}`")
+            with col_nav2:
+                st.metric("Checkpoints Passed", f"{passed_cnt} / 18")
+            with col_nav3:
+                st.caption("Use the sidebar menu to view details:")
+                st.markdown("👉 **📖 Final Lesson Viewer**  \n👉 **⚖️ Evaluation Dashboard**")
 
         except Exception as e:
             status_box.update(label="Workflow Exception Occurred", state="error")

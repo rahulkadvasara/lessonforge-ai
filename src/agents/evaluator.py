@@ -45,13 +45,23 @@ class ContentEvaluatorAgent:
         ]
 
         try:
-            # Request JSON output
-            raw_response = self.llm.generate(
-                messages,
-                temperature=0.0,
-                max_tokens=4096,
-                response_format={"type": "json_object"}
-            )
+            # Request JSON output with resilient fallback if provider proxy rejects json_object format
+            try:
+                raw_response = self.llm.generate(
+                    messages,
+                    temperature=0.0,
+                    max_tokens=2200,
+                    response_format={"type": "json_object"}
+                )
+            except Exception as format_err:
+                logger.warning(f"Structured response_format failed ({format_err}), retrying without strict proxy formatting...")
+                raw_response = self.llm.generate(
+                    messages,
+                    temperature=0.0,
+                    max_tokens=2200,
+                    response_format=None
+                )
+
             report = validate_evaluation_report(raw_response)
             report.evaluator_model = self.llm.get_model_name()
             report.timestamp = datetime.now(timezone.utc).isoformat()

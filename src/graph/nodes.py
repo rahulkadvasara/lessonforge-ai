@@ -312,5 +312,7 @@ class WorkflowNodes:
         logs.append(f"Workflow execution finished with status: {final_status}.")
 
         return {
+            "final_status": final_status,
+            "final_lesson": lesson_text,
             "execution_logs": logs
         }

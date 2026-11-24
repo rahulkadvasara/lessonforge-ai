@@ -164,7 +164,12 @@ def main():
     st.markdown('<div class="sub-title">Closed-loop agentic lesson creation with hard-gate 18-checkpoint binary evaluation and bounded regeneration.</div>', unsafe_allow_html=True)
 
     # --- ROUTING ---
+    all_recent_runs = repo.list_runs(limit=30)
     active_run_id = st.session_state.get("active_run_id")
+    if not active_run_id and all_recent_runs:
+        active_run_id = all_recent_runs[0]["run_id"]
+        st.session_state["active_run_id"] = active_run_id
+
     latest_output = st.session_state.get("latest_workflow_output")
 
     if nav_choice == "📊 Dashboard Overview":
@@ -174,57 +179,101 @@ def main():
         render_generation_interface(active_llm)
 
     elif nav_choice == "⚖️ Evaluation Dashboard":
-        eval_data = None
-        if latest_output:
-            eval_data = latest_output.get("evaluation_result")
-        elif active_run_id:
-            evals = repo.get_evaluations_for_run(active_run_id)
+        if all_recent_runs:
+            run_options = {f"{r['created_at']} | {r['topic']} ({r['final_status']})": r["run_id"] for r in all_recent_runs}
+            default_idx = 0
+            if active_run_id:
+                for idx, (label, rid) in enumerate(run_options.items()):
+                    if rid == active_run_id:
+                        default_idx = idx
+                        break
+
+            selected_label = st.selectbox("Select Generation Run to Inspect Audit:", list(run_options.keys()), index=default_idx)
+            inspect_run_id = run_options[selected_label]
+            evals = repo.get_evaluations_for_run(inspect_run_id)
+
             if evals:
-                eval_data = evals[-1].get("evaluation_report")
-        render_evaluation_report_view(eval_data)
+                if len(evals) > 1:
+                    attempt_tabs = st.tabs([f"Attempt #{e['attempt_number']} ({e['overall_status']})" for e in evals])
+                    for a_idx, e in enumerate(evals):
+                        with attempt_tabs[a_idx]:
+                            render_evaluation_report_view(e.get("evaluation_report"))
+                else:
+                    render_evaluation_report_view(evals[-1].get("evaluation_report"))
+            else:
+                st.info(f"No evaluation records found for run `{inspect_run_id[:12]}...`.")
+        elif latest_output and latest_output.get("evaluation_result"):
+            render_evaluation_report_view(latest_output.get("evaluation_result"))
+        else:
+            st.info("No runs found in database. Run a generation first.")
 
     elif nav_choice == "🛑 Rejection Log":
         render_rejection_logs_view(repo, active_run_id=active_run_id)
 
     elif nav_choice == "📖 Final Lesson Viewer":
         st.subheader("Final Lesson Artifact")
-        if latest_output:
-            final_status = latest_output.get("final_status", "UNKNOWN")
-            lesson_text = latest_output.get("final_lesson") or latest_output.get("current_lesson") or ""
-            eval_res = latest_output.get("evaluation_result", {})
-            passed_count = eval_res.get("passed_count", 0)
+        
+        if all_recent_runs:
+            run_options = {f"{r['created_at']} | {r['topic']} ({r['final_status']})": r["run_id"] for r in all_recent_runs}
+            default_idx = 0
+            if active_run_id:
+                for idx, (label, rid) in enumerate(run_options.items()):
+                    if rid == active_run_id:
+                        default_idx = idx
+                        break
 
-            if final_status == "APPROVED":
-                st.success(f"### ✅ APPROVED CONTENT — Quality Gate Passed ({passed_count}/18 Checkpoints)")
+            selected_label = st.selectbox("Select Lesson Run to View:", list(run_options.keys()), index=default_idx)
+            view_run_id = run_options[selected_label]
+            run_meta = repo.get_run(view_run_id)
+            versions = repo.get_lesson_versions(view_run_id)
+            evals = repo.get_evaluations_for_run(view_run_id)
+            rejections = repo.get_rejection_logs(view_run_id)
+
+            if versions:
+                final_v = versions[-1]
+                lesson_text = final_v.get("lesson_content", "")
+                final_status = run_meta.get("final_status", "UNKNOWN") if run_meta else "UNKNOWN"
+                last_eval = evals[-1] if evals else {}
+                passed_count = last_eval.get("passed_count", 0)
+
+                if final_status == "APPROVED":
+                    st.success(f"### ✅ APPROVED CONTENT — Quality Gate Passed ({passed_count}/18 Checkpoints)")
+                else:
+                    st.error(f"### ⚠️ NEEDS HUMAN REVIEW — Quality Gate Incomplete ({passed_count}/18 Checkpoints)")
+                    st.caption("Content did not satisfy all 18 mandatory checkpoints within the bounded retry limit.")
+
+                c_down1, c_down2 = st.columns(2)
+                with c_down1:
+                    st.download_button(
+                        "📥 Download Lesson (Markdown)",
+                        data=lesson_text,
+                        file_name=f"lessonforge_{view_run_id[:8]}.md",
+                        mime="text/markdown",
+                        use_container_width=True
+                    )
+                with c_down2:
+                    audit_pkg = {
+                        "run_id": view_run_id,
+                        "topic": run_meta.get("topic") if run_meta else "",
+                        "final_status": final_status,
+                        "attempts_used": run_meta.get("attempts_used") if run_meta else 1,
+                        "evaluations": [e.get("evaluation_report") for e in evals],
+                        "rejections": rejections
+                    }
+                    st.download_button(
+                        "📥 Download Audit Report (JSON)",
+                        data=json.dumps(audit_pkg, indent=2, default=str),
+                        file_name=f"lessonforge_{view_run_id[:8]}_audit.json",
+                        mime="application/json",
+                        use_container_width=True
+                    )
+
+                st.markdown("---")
+                st.markdown(lesson_text)
             else:
-                st.error(f"### ⚠️ NEEDS HUMAN REVIEW — Quality Gate Incomplete ({passed_count}/18 Checkpoints)")
-                st.caption("Content did not satisfy all 18 mandatory checkpoints within the bounded retry limit.")
-
-            c_down1, c_down2 = st.columns(2)
-            with c_down1:
-                st.download_button(
-                    "📥 Download Lesson (Markdown)",
-                    data=lesson_text,
-                    file_name="lessonforge_lesson.md",
-                    mime="text/markdown",
-                    use_container_width=True
-                )
-            with c_down2:
-                audit_pkg = {
-                    "run_id": latest_output.get("run_id"),
-                    "final_status": final_status,
-                    "evaluation": eval_res,
-                    "rejections": latest_output.get("rejection_history", [])
-                }
-                st.download_button(
-                    "📥 Download Audit Report (JSON)",
-                    data=json.dumps(audit_pkg, indent=2, default=str),
-                    file_name="lessonforge_audit.json",
-                    mime="application/json",
-                    use_container_width=True
-                )
-
-            st.markdown("---")
+                st.warning(f"No lesson versions recorded for run `{view_run_id[:12]}...`.")
+        elif latest_output and (latest_output.get("final_lesson") or latest_output.get("current_lesson")):
+            lesson_text = latest_output.get("final_lesson") or latest_output.get("current_lesson") or ""
             st.markdown(lesson_text)
         else:
             st.info("No lesson generated in this active session. Navigate to '✍️ Generate Lesson' to create one.")

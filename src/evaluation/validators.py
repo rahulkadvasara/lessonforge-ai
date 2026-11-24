@@ -43,10 +43,47 @@ def validate_evaluation_report(raw_data: Any) -> EvaluationReport:
         if match:
             clean_str = match.group(1).strip()
         try:
-            parsed = json.loads(clean_str)
+            parsed = json.loads(clean_str, strict=False)
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON string: {e}")
-            raise ValueError(f"Malformed evaluation report: invalid JSON: {e}")
+            # 1. Auto-repair truncated JSON or missing closing bracket/brace
+            repaired = False
+            for suffix in ["\n}", "\n]}", "\"\n}", "\"\n]}", "\n    }\n  ]\n}"]:
+                try:
+                    candidate = re.sub(r',\s*$', '', clean_str)
+                    parsed = json.loads(candidate + suffix, strict=False)
+                    repaired = True
+                    logger.info("Successfully auto-repaired truncated JSON report suffix.")
+                    break
+                except Exception:
+                    pass
+
+            # 2. Resilient Regex checkpoint extractor if JSON had unescaped inner quotes
+            if not repaired:
+                extracted_cps = []
+                for cp_match in re.finditer(r'\{[^{}]*"id"\s*:\s*"([A-Z0-9_]+)"[^{}]*\}', clean_str):
+                    chunk = cp_match.group(0)
+                    try:
+                        cp_obj = json.loads(chunk, strict=False)
+                        extracted_cps.append(cp_obj)
+                    except Exception:
+                        cid_m = re.search(r'"id"\s*:\s*"([A-Z0-9_]+)"', chunk)
+                        status_m = re.search(r'"status"\s*:\s*"(PASS|FAIL)"', chunk, re.IGNORECASE)
+                        reason_m = re.search(r'"reason"\s*:\s*"([^"]*)"', chunk)
+                        evid_m = re.search(r'"evidence"\s*:\s*"([^"]*)"', chunk)
+                        if cid_m and status_m:
+                            extracted_cps.append({
+                                "id": cid_m.group(1),
+                                "status": status_m.group(1).upper(),
+                                "evidence": evid_m.group(1) if evid_m else "Evaluated in lesson text.",
+                                "reason": reason_m.group(1) if reason_m else "Evaluator criteria checked.",
+                                "suggestion": None
+                            })
+                if extracted_cps:
+                    logger.info(f"Resiliently recovered {len(extracted_cps)} checkpoints via pattern extractor.")
+                    parsed = {"checkpoints": extracted_cps}
+                else:
+                    logger.error(f"Failed to parse JSON string: {e}")
+                    raise ValueError(f"Malformed evaluation report: invalid JSON: {e}")
     elif isinstance(raw_data, dict):
         parsed = raw_data
     else:

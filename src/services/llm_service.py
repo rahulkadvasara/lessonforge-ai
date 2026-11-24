@@ -62,7 +62,7 @@ class GroqLLMClient(BaseLLMClient):
         self,
         messages: List[Dict[str, str]],
         temperature: float | None = None,
-        max_tokens: int = 2048,
+        max_tokens: int = 2200,
         response_format: Optional[Dict[str, str]] = None
     ) -> str:
         if not self.client:
@@ -71,7 +71,7 @@ class GroqLLMClient(BaseLLMClient):
             )
 
         temp = temperature if temperature is not None else self.temperature
-        delay = 1.0
+        delay = 3.0
 
         for attempt in range(1, self.max_retries + 1):
             try:
@@ -81,8 +81,8 @@ class GroqLLMClient(BaseLLMClient):
                     "temperature": temp,
                     "max_tokens": max_tokens,
                 }
-                if response_format:
-                    kwargs["response_format"] = response_format
+                # Groq server proxy often fails with 400 json_validate_failed for OSS models;
+                # our prompts already enforce strict JSON output directly.
 
                 response = self.client.chat.completions.create(**kwargs)
                 content = response.choices[0].message.content
@@ -136,7 +136,7 @@ class GeminiLLMClient(BaseLLMClient):
         self,
         messages: List[Dict[str, str]],
         temperature: float | None = None,
-        max_tokens: int = 2500,
+        max_tokens: int = 2200,
         response_format: Optional[Dict[str, str]] = None
     ) -> str:
         if not self.client:
@@ -168,7 +168,7 @@ class GeminiLLMClient(BaseLLMClient):
         if response_format and response_format.get("type") == "json_object":
             config_dict["response_mime_type"] = "application/json"
 
-        delay = 1.0
+        delay = 2.5
         for attempt in range(1, self.max_retries + 1):
             try:
                 resp = self.client.models.generate_content(

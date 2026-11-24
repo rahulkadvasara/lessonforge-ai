@@ -37,7 +37,7 @@ class LessonGeneratorAgent:
             {"role": "user", "content": user_prompt}
         ]
 
-        lesson_text = self.llm.generate(messages, temperature=0.3, max_tokens=4096)
+        lesson_text = self.llm.generate(messages, temperature=0.3, max_tokens=1500)
         return lesson_text
 
     def regenerate_lesson(
@@ -65,5 +65,5 @@ class LessonGeneratorAgent:
             {"role": "user", "content": user_prompt}
         ]
 
-        revised_lesson = self.llm.generate(messages, temperature=0.2, max_tokens=4096)
+        revised_lesson = self.llm.generate(messages, temperature=0.2, max_tokens=1500)
         return revised_lesson

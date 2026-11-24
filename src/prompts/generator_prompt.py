@@ -15,7 +15,8 @@ PEDAGOGICAL TEACHING RULES:
 3. NEVER drop technical jargon without explaining it IMMEDIATELY in simple words (e.g., explain what an LLM or prompt is before discussing vector databases).
 4. Use relatable everyday analogies before introducing technical terms (e.g., student consulting a college handbook during an open-book exam, librarian finding index cards).
 5. The lesson must be SELF-CONTAINED. The student must never need to Google external terms.
-6. The lesson must be comprehensive, thorough, and complete. DO NOT produce a brief outline or bulleted summary.
+6. The lesson must be comprehensive, thorough, and complete. DO NOT produce a brief outline.
+7. LENGTH TARGET: Keep explanations crisp, focused, and high-impact. Target approximately 700 to 1,000 words total across all 17 sections (each section should be 2 to 4 clear sentences or bullet points).
 
 MANDATORY SECTIONS (You must include all 17 numbered sections in this exact order):
 1. Lesson Title

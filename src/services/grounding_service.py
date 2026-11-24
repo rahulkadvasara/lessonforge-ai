@@ -27,7 +27,7 @@ class GroundingService:
             except Exception as e:
                 print(f"Warning: Failed to load reference {file_path}: {e}")
 
-    def get_grounding_context(self, topic: str, max_chars: int = 2000) -> str:
+    def get_grounding_context(self, topic: str, max_chars: int = 1000) -> str:
         """
         Return relevant grounding excerpts based on the topic.
         Provides authoritative grounding notes for RAG and related AI topics.

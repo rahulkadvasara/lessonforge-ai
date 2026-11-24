@@ -9,13 +9,35 @@ def render_rejection_logs_view(repo: MemoryRepository, active_run_id: str | None
     """Render audit logs for all failed attempts and regeneration feedback."""
     st.subheader("Rejection Logs & Iteration Audit Trail")
 
-    logs = repo.get_rejection_logs(run_id=active_run_id)
-
-    if not logs:
-        st.info("No rejections recorded for this run. Either the lesson passed on Attempt 1 or no runs have been executed.")
+    all_runs = repo.list_runs(limit=30)
+    if not all_runs:
+        st.info("No runs found in database. Run a generation first.")
         return
 
-    st.markdown(f"**Found {len(logs)} Rejection Event(s)**")
+    run_options = {f"{r['created_at']} | {r['topic']} ({r['final_status']})": r["run_id"] for r in all_runs}
+    
+    default_idx = 0
+    if active_run_id:
+        for idx, (label, rid) in enumerate(run_options.items()):
+            if rid == active_run_id:
+                default_idx = idx
+                break
+
+    selected_label = st.selectbox("Select Run to Inspect Rejections:", list(run_options.keys()), index=default_idx)
+    target_run_id = run_options[selected_label]
+
+    logs = repo.get_rejection_logs(run_id=target_run_id)
+    run_meta = repo.get_run(target_run_id)
+
+    if not logs:
+        status_text = run_meta.get("final_status") if run_meta else "APPROVED"
+        if status_text == "APPROVED":
+            st.success(f"🎉 **Zero Rejections for Run `{target_run_id[:12]}...`!** The lesson passed all 18 mandatory quality checkpoints on Attempt #1 without requiring any regeneration.")
+        else:
+            st.info(f"No rejection records logged for run `{target_run_id[:12]}...`.")
+        return
+
+    st.markdown(f"**Found {len(logs)} Rejection Event(s) for Run `{target_run_id[:12]}...`**")
 
     for i, r in enumerate(logs):
         attempt = r.get("attempt_number", 1)

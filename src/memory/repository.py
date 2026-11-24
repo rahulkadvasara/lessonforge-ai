@@ -48,7 +48,7 @@ class MemoryRepository:
     def list_runs(self, limit: int = 50) -> List[Dict[str, Any]]:
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM generation_runs ORDER BY created_at DESC LIMIT ?", (limit,))
+            cursor.execute("SELECT * FROM generation_runs ORDER BY rowid DESC LIMIT ?", (limit,))
             rows = cursor.fetchall()
             runs = []
             for r in rows:
